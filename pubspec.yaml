@@ -15,7 +15,7 @@ dependencies:
   # --- CORE GOOGLE & AI STACK ---
   # Mandatory for the challenge: connects your app to Google Cloud/Vertex AI.
   firebase_core: ^3.2.0
-  firebase_ai: any
+  firebase_ai: ^2.3.0 # High-level SDK for Multimodal Live API
   google_generative_ai: any
   
   # --- MULTIMODAL CAPABILITIES (Voice & Vision) ---
@@ -42,11 +42,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # Add assets here for GFlux branding
-  assets:
-    - assets/images/gflux_logo.png
-    - assets/animations/flux_pulse.json
 
 # PROJECT ARCHITECTURE NOTE:
 # This project follows the "Live Agent" track. 

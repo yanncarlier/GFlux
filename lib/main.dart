@@ -4,14 +4,22 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'controllers/gemini_live_controller.dart';
 import 'views/home_view.dart';
-
+import 'firebase_options.dart';
 void main() async {
+  print("GFlux: Starting application...");
   WidgetsFlutterBinding.ensureInitialized();
+  print("GFlux: Widgets initialized.");
   
-  // Note: Firebase project configuration must be present in android/ios folders.
-  // E.g., via firebase configure or adding google-services.json manually.
-  await Firebase.initializeApp(); 
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ); 
+    print("GFlux: Firebase initialized successfully.");
+  } catch (e) {
+    print("GFlux: Firebase initialization failed: $e");
+  }
   
+  print("GFlux: Running app...");
   runApp(
     MultiProvider(
       providers: [
@@ -33,11 +41,11 @@ class GFluxApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       theme: ThemeData(
         brightness: Brightness.dark,
-        textTheme: GoogleFonts.outfitTextTheme(
+        textTheme: GoogleFonts.spaceGroteskTextTheme(
           ThemeData(brightness: Brightness.dark).textTheme,
         ),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.cyanAccent, 
+          seedColor: const Color(0xFFA855F7), 
           brightness: Brightness.dark
         ),
         useMaterial3: true,

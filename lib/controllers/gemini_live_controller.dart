@@ -35,7 +35,7 @@ class GeminiLiveController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final model = FirebaseAI.instance.googleAI().liveGenerativeModel(
+      final model = FirebaseAI.googleAI().liveGenerativeModel(
         model: _modelName,
         systemInstruction: Content.text(
           "You are GFlux, a real-time AI voice assistant. "
@@ -83,7 +83,7 @@ class GeminiLiveController extends ChangeNotifier {
           final audioParts = message.modelTurn?.parts.whereType<InlineDataPart>() ?? [];
           for (var part in audioParts) {
             if (part.mimeType.contains('audio')) {
-              await _playAudioChunk(part.data);
+              await _playAudioChunk(part.bytes);
             }
           }
         }
@@ -105,7 +105,7 @@ class GeminiLiveController extends ChangeNotifier {
       final stream = await _recorder.startStream(config);
       _recorderSubscription = stream.listen((data) {
         if (_session != null && _state == GeminiState.active) {
-          _session!.send(Content.inlineData('audio/pcm;rate=16000', data));
+          _session!.send(input: Content.inlineData('audio/pcm;rate=16000', data));
         }
       });
     } else {
@@ -130,7 +130,7 @@ class GeminiLiveController extends ChangeNotifier {
   Future<void> sendText(String text) async {
     if (_session != null && _state == GeminiState.active) {
       _addLog("You (text): $text");
-      await _session!.send(Content.text(text));
+      await _session!.send(input: Content.text(text));
     }
   }
 
