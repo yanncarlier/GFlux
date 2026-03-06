@@ -1,7 +1,15 @@
 # Project Story: GFlux 🌌
 
 ## Inspiration
-GFlux was born from a simple question: *What if an AI didn't feel like a chatbot, but like a fluid extension of our own thoughts?* Most voice assistants today are "stuttery"—they listen, wait, process, and then speak. We wanted to build something that felt like **flux**: a continuous, bidirectional stream of intelligence. Inspired by the "flow state" in creative work, GFlux aims to be an agent that disappears into the background while remaining instantly accessible.
+GFlux was born from a simple question: 
+
+I received an email from **Cassie from Devpost** Sun, Mar 1, 2026.
+Gemini Live Agent Challenge By Google
+Prizes	$80,000 in cash
+Deadline	Mar 16, 2026
+To be completely honest the prize money was what grab my attention first and,
+also this is something I tried to develop a few tears ago yet had not time and the tech was still not available for low latency at a low cost. The third and last reason is this is something I want to use myself, I am tired of typing on mobile keyboards not made for humans.
+
 
 ## What it does
 GFlux is a premium multimodal AI agent that provides real-time, bidirectional voice interactions. Key features include:
@@ -41,6 +49,7 @@ We delved deep into the mechanics of **Digital Signal Processing (DSP)** and Web
 The current version of GFlux is just the foundation. Our roadmap includes:
 - **Vision Integration**: Enabling the camera to allow Gemini to "see" the user's world in real-time.
 - **Reactive Waveforms**: Implementing a custom painter to visualize voice frequencies using Fast Fourier Transforms (FFT).
+- **Multi-Endpoint Hub**: Expanding configuration to support multiple AI backends. This includes native support for **Vertex AI Gemini API** for enterprise scalability, as well as non-Google options for maximum flexibility.
 - **Cloud Run Hosting**: Moving the transient state management to a Google Cloud Run backend for multi-user session persistence.
 - **Haptic Harmony**: Adding subtle haptic pulses that match the cadence of Gemini's voice.
 
