@@ -1,8 +1,9 @@
-# GFlux 🌌
-
-![GFlux Hero](assets/images/proof.png)
+# GFlux  
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pubspec.yaml)
+
+### First Release:  
+https://github.com/yanncarlier/GFlux/releases/tag/v1.0.0 
 
 **GFlux** is a high-performance, real-time multimodal AI agent built for the **Gemini Live Agent Challenge**. It leverages the cutting-edge Gemini Multimodal Live API to provide seamless, low-latency bidirectional voice and text interactions in a premium mobile environment.
 
@@ -63,9 +64,18 @@ For a quick start, follow the steps below. For comprehensive setup details, envi
 
 4. **Run the Application**:
    Connect your Android or iOS device and run:
+   
    ```bash
    flutter run
    ```
+   
+5. **Build the Application**:
+   
+   ```
+   flutter build apk --release
+   ```
+   
+   
 
 ---
 
