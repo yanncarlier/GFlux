@@ -5,13 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:record/record.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 enum GeminiState { idle, connecting, active, error }
 enum BackendType { vertex, direct }
 
 class GeminiLiveController extends ChangeNotifier {
   // CONFIGURATION
-  final String _apiKey = "AIzaSyAfv4F3u_l0AmYlH7rUt8guQk8cHInZQrs";
+  final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? "";
   final String _modelName = "gemini-2.5-flash-native-audio-latest";
   // Alternate model names to try: 'gemini-2.0-flash', 'gemini-2.0-flash-exp'
   

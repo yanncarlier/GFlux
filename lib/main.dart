@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'controllers/gemini_live_controller.dart';
 import 'views/home_view.dart';
 import 'firebase_options.dart';
 void main() async {
   print("GFlux: Starting application...");
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  print("GFlux: Environment loaded.");
   print("GFlux: Widgets initialized.");
   
   try {
