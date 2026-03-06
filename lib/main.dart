@@ -35,6 +35,7 @@ class GFluxApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("GFlux: App build");
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GFlux: Gemini Live AI',

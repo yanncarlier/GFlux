@@ -18,44 +18,40 @@ class HomeView extends StatelessWidget {
       backgroundColor: deepCharcoal,
       body: Stack(
         children: [
+          // UI Layer
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Status Header
                   _buildHeader(context, controller, accentPurple),
-                  
                   const Spacer(),
-                  
-                  // Central Frame
                   _buildCentralFrame(context, controller, accentPurple, deepPurple),
-                  
                   const Spacer(),
-                  
-                  // Waveform/Glow Footer
                   _buildFooter(context, controller, accentPurple),
                 ],
               ),
             ),
           ),
           
-          // Interaction Overlay (Tap to Start/Stop)
+          // Interaction Layer (Tap to Start/Stop)
           Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  if (controller.isActive || controller.state == GeminiState.connecting) {
-                    controller.stopSession();
-                  } else {
-                    controller.startSession();
-                  }
-                },
-                overlayColor: MaterialStateProperty.all(accentPurple.withOpacity(0.02)),
-                highlightColor: Colors.transparent,
-              ),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                debugPrint("GFlux: Screen tapped. State: ${controller.state}");
+                if (controller.isActive || controller.state == GeminiState.connecting) {
+                  controller.stopSession();
+                } else {
+                  controller.startSession();
+                }
+              },
+              onDoubleTap: () {
+                debugPrint("GFlux: Screen double-tapped.");
+                controller.sendTestMessage("Hello Gemini! Explain quantum physics in a single, short sentence.");
+              },
+              child: Container(color: Colors.transparent),
             ),
           ),
           
@@ -135,7 +131,7 @@ class HomeView extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: 580,
+      height: 520, // Adjusted for typical mobile height
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(32),
@@ -151,10 +147,7 @@ class HomeView extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Corner Brackets
           ..._buildBrackets(),
-          
-          // Concentric Circles
           Opacity(
             opacity: 0.2,
             child: Container(
@@ -164,28 +157,45 @@ class HomeView extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withOpacity(0.1)),
               ),
-              alignment: Alignment.center,
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+              child: Center(
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  ),
                 ),
               ),
             ),
           ),
-          
-          // Live Indicator or Prompt
           if (!isActive && controller.state != GeminiState.connecting)
-             Text(
-              "TAP TO INITIALIZE",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.1),
-                fontSize: 12,
-                letterSpacing: 4,
-                fontWeight: FontWeight.w300,
-              ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (controller.lastError != null)
+                   Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Text(
+                      controller.lastError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                Text(
+                  "TAP TO INITIALIZE",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.1),
+                    fontSize: 12,
+                    letterSpacing: 4,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ],
             )
           else if (isActive)
             _buildListeningAnimation(accent),
@@ -248,7 +258,7 @@ class HomeView extends StatelessWidget {
           ),
         );
       },
-      onEnd: () {}, // Handled by builder if looping manually, use a proper animation controller for production
+      onEnd: () {},
     );
   }
 
@@ -259,7 +269,6 @@ class HomeView extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 80),
       child: Column(
         children: [
-          // Waveform line
           Container(
             width: 280,
             height: 2,
@@ -280,18 +289,21 @@ class HomeView extends StatelessWidget {
             ),
           ),
           if (isActive)
-            Container(
-              width: 200,
-              height: 32,
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: const ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(100)),
-                child: Opacity(
-                  opacity: 0.5,
-                  child: BlurEffect(),
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Container(
+                width: 200,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 100,
+                    height: 2,
+                    color: accent.withOpacity(0.2),
+                  ),
                 ),
               ),
             ),
@@ -300,23 +312,3 @@ class HomeView extends StatelessWidget {
     );
   }
 }
-
-class BlurEffect extends StatelessWidget {
-  const BlurEffect({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFFA855F7),
-            blurRadius: 40,
-            spreadRadius: 20,
-          )
-        ]
-      ),
-    );
-  }
-}
-
