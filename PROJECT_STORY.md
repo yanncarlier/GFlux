@@ -47,10 +47,11 @@ We delved deep into the mechanics of **Digital Signal Processing (DSP)** and Web
 
 ## What's next for GFlux
 The current version of GFlux is just the foundation. Our roadmap includes:
+
+- **Improved UI Design**: Evolving the interface with reactive waveforms and advanced glassmorphism to better reflect the "flow" of conversation.
+- **Multi-Endpoint Hub**: Expanding configuration to support multiple AI backends, for example **Vertex AI Gemini API**, as well as non-Google options for maximum flexibility.
 - **Vision Integration**: Enabling the camera to allow Gemini to "see" the user's world in real-time.
-- **Reactive Waveforms**: Implementing a custom painter to visualize voice frequencies using Fast Fourier Transforms (FFT).
-- **Multi-Endpoint Hub**: Expanding configuration to support multiple AI backends. This includes native support for **Vertex AI Gemini API** for enterprise scalability, as well as non-Google options for maximum flexibility.
-- **Cloud Run Hosting**: Moving the transient state management to a Google Cloud Run backend for multi-user session persistence.
+- **State management**: Adding state options for memory persistence.
 - **Haptic Harmony**: Adding subtle haptic pulses that match the cadence of Gemini's voice.
 
 ---
