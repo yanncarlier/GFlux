@@ -2,7 +2,12 @@
 
 ![GFlux Hero](assets/images/proof.png)
 
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pubspec.yaml)
+
 **GFlux** is a high-performance, real-time multimodal AI agent built for the **Gemini Live Agent Challenge**. It leverages the cutting-edge Gemini Multimodal Live API to provide seamless, low-latency bidirectional voice and text interactions in a premium mobile environment.
+
+> [!NOTE]
+> This documentation and its associated files will be improved and expanded over time as the project evolves.
 
 ---
 
@@ -30,6 +35,8 @@
 ---
 
 ## 🛠️ Getting Started
+
+For a quick start, follow the steps below. For comprehensive setup details, environment configuration, and contributor guidelines, please refer to the **[INSTALL.md](INSTALL.md)** file.
 
 ### Prerequisites
 - Flutter SDK (>= 3.5.0)

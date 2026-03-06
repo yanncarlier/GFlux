@@ -62,4 +62,20 @@ GFlux processes raw PCM data to minimize latency.
 5. Open a Pull Request.
 
 ---
+
+## 🛠️ Troubleshooting
+
+### Audio Issues
+- **Problem**: No audio playback on Android.
+- **Solution**: Ensure your device is not on "Silent" mode and has the necessary permissions granted. Also, check that the `minSdkVersion` is at least **21**.
+
+### Connection Failures
+- **Problem**: WebSocket fails with `404` or `401`.
+- **Solution**: Double-check your `.env` file for a valid **GEMINI_API_KEY**. Also, ensure you have an active internet connection.
+
+### Device Detection
+- **Problem**: `flutter devices` doesn't see your phone.
+- **Solution**: Enable **USB Debugging** in Developer Options. For Android, you may need to use `adb kill-server` and `adb start-server` if the connection is erratic.
+
+---
 *Questions? Reach out via the Gemini Live Agent Challenge community or open an issue.*
