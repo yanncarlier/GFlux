@@ -17,13 +17,23 @@ GFlux is a premium multimodal AI agent that provides real-time, bidirectional vo
 - **Multimodal Flexibility**: While focused on audio, GFlux is built to handle text and future vision inputs natively.
 - **Adaptive UI**: A minimal, high-aesthetic interface that pulses and glows in sync with the agent's state, providing intuitive visual feedback.
 
-## How we built it
-The core of GFlux is built on the **Flutter** framework for fluid 60fps performance on mobile. The "brain" is powered by the **Gemini Multimodal Live API** via a stateful WebSocket connection.
+## Built with 🛠️
 
-To handle real-time audio on hardware, we implemented a custom audio pipeline:
-- **Input**: Captured at 16kHz Mono PCM 16-bit using the `record` package.
-- **Output**: Handled via `flutter_sound`, processing 24kHz Mono PCM chunks received over the WebSocket.
-- **Latency Logic**: We used a sequential buffering strategy. The duration $d$ of each audio chunk is calculated to ensure perfect timing:
+GFlux is engineered using a modern, high-performance stack designed for low-latency AI interactions:
+
+- **Language**: [Dart](https://dart.dev/)
+- **Framework**: [Flutter](https://flutter.dev/) (Targeting Android, iOS, and Web)
+- **API**: [Gemini Multimodal Live API](https://ai.google.dev/gemini-api/docs/multimodal-live) (via WebSocket)
+- **Cloud Services**: 
+  - **Firebase**: Initialized for future authentication and cloud logic.
+  - **Google Cloud Platform**: Leveraged for high-bandwidth AI streaming.
+- **State Management**: [Provider](https://pub.dev/packages/provider) for clean, reactive state propagation.
+- **Audio Processing**:
+  - `record`: For high-fidelity PCM audio capture.
+  - `flutter_sound`: For low-latency buffered audio playback.
+- **Configuration**: `flutter_dotenv` for secure environment variable management.
+
+To handle real-time audio on hardware, we implemented a custom audio pipeline where the duration $d$ of each audio chunk is calculated to ensure perfect timing:
   $$d = \frac{L}{r \cdot b \cdot c}$$
   Where:
   - $L$ = Length of the byte buffer
@@ -48,7 +58,7 @@ We delved deep into the mechanics of **Digital Signal Processing (DSP)** and Web
 ## What's next for GFlux
 The current version of GFlux is just the foundation. Our roadmap includes:
 
-- **Improved UI Design**: Evolving the interface with reactive waveforms and advanced glassmorphism to better reflect the "flow" of conversation.
+- **Improved UI Design**: Evolving the interface with reactive anthropomorphic UX to better reflect the "flow" of human like conversation.
 - **Multi-Endpoint Hub**: Expanding configuration to support multiple AI backends, for example **Vertex AI Gemini API**, as well as non-Google options for maximum flexibility.
 - **Vision Integration**: Enabling the camera to allow Gemini to "see" the user's world in real-time.
 - **State management**: Adding state options for memory persistence.
