@@ -11,11 +11,32 @@ To be completely honest the prize money was what grab my attention first and,
 also this is something I tried to develop a few tears ago yet had not time and the tech was still not available for low latency at a low cost. The third and last reason is this is something I want to use myself, I am tired of typing on mobile keyboards not made for humans.
 
 
-## What it does
-GFlux is a premium multimodal AI agent that provides real-time, bidirectional voice interactions. Key features include:
-- **Low-Latency Voice Interaction**: Users can speak naturally to Gemini, and the agent responds in real-time without traditional "turn-based" delays.
-- **Multimodal Flexibility**: While focused on audio, GFlux is built to handle text and future vision inputs natively.
 - **Adaptive UI**: A minimal, high-aesthetic interface that pulses and glows in sync with the agent's state, providing intuitive visual feedback.
+
+## Architecture & System Design 🏗️
+
+Below is a high-level representation of how GFlux connects the user to the Gemini Multimodal Live API.
+
+```mermaid
+graph TD
+    User((User)) <--> |"Audio (Voice)"| Frontend["Flutter Mobile App (GFlux)"]
+    
+    subgraph "Local Client"
+        Frontend --> Record["record (PCM Capture)"]
+        Frontend --> Playback["flutter_sound (Buffering Queue)"]
+        Controller["Gemini Live Controller"] --- Record
+        Controller --- Playback
+    end
+
+    Controller <--> |"WSS (Binary Chunks)"| GeminiAPI["Gemini Multimodal Live API"]
+    
+    subgraph "Cloud Services"
+        GeminiAPI <--> |"Audio/Text"| Brain["Gemini AI Engine"]
+        Frontend <--> |"Auth/Config"| Firebase["Firebase / GCP"]
+    end
+```
+
+![Architecture Diagram](assets/images/architecture.png)
 
 ## Built with 🛠️
 

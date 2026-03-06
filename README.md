@@ -1,5 +1,7 @@
 # GFlux 🌌
 
+![GFlux Hero](assets/images/proof.png)
+
 **GFlux** is a high-performance, real-time multimodal AI agent built for the **Gemini Live Agent Challenge**. It leverages the cutting-edge Gemini Multimodal Live API to provide seamless, low-latency bidirectional voice and text interactions in a premium mobile environment.
 
 ---
