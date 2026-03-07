@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:record/record.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 enum GeminiState { idle, connecting, active, error }
 enum BackendType { vertex, direct }
@@ -14,25 +16,36 @@ class GeminiLiveController extends ChangeNotifier {
   // CONFIGURATION
   final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? "";
   final String _modelName = "gemini-2.5-flash-native-audio-latest";
-  // Alternate model names to try: 'gemini-2.0-flash', 'gemini-2.0-flash-exp'
-  
+  // Alternate model names: 'gemini-2.0-flash-exp', 'gemini-2.0-flash'
+
   // Choose backend: direct (Free Tier) or vertex (Paid/Enterprise)
   BackendType _backendType = BackendType.direct;
-  
+
   GeminiState _state = GeminiState.idle;
   final List<String> _transcript = [];
   String? _lastError;
   bool _useFallbackEndpoint = false;
-  
+
   // Resources
   WebSocketChannel? _directChannel;
   StreamSubscription? _socketSubscription;
   final AudioRecorder _recorder = AudioRecorder();
   StreamSubscription? _recorderSubscription;
-  
+
   // Audio Player (flutter_sound for low-latency streaming)
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool _isPlayerInitialized = false;
+
+  // ── VISION ──────────────────────────────────────────────────────────────
+  CameraController? _cameraController;
+  bool _isCameraOn = false;
+  Timer? _frameSendTimer;
+  List<CameraDescription> _availableCameras = [];
+  int _selectedCameraIndex = 0; // 0 = back, 1 = front (if available)
+
+  CameraController? get cameraController => _cameraController;
+  bool get isCameraOn => _isCameraOn;
+  // ────────────────────────────────────────────────────────────────────────
 
   // Getters
   GeminiState get state => _state;
@@ -43,11 +56,11 @@ class GeminiLiveController extends ChangeNotifier {
 
   GeminiLiveController() {
     _initPlayer();
+    _discoverCameras();
   }
 
   Future<void> _initPlayer() async {
     try {
-      // await _player.setLogLevel(Level.error);
       await _player.openPlayer();
       _isPlayerInitialized = true;
       print("GFlux: Audio player initialized.");
@@ -55,6 +68,115 @@ class GeminiLiveController extends ChangeNotifier {
       print("GFlux: Player init error: $e");
     }
   }
+
+  Future<void> _discoverCameras() async {
+    try {
+      _availableCameras = await availableCameras();
+      print("GFlux: Discovered ${_availableCameras.length} camera(s).");
+    } catch (e) {
+      print("GFlux: Camera discovery error: $e");
+    }
+  }
+
+  // ── CAMERA CONTROLS ────────────────────────────────────────────────────
+
+  Future<void> toggleCamera() async {
+    if (_isCameraOn) {
+      await _stopCamera();
+    } else {
+      await _startCamera();
+    }
+  }
+
+  Future<void> _startCamera() async {
+    if (_availableCameras.isEmpty) {
+      _addLog("Error: No cameras found on device.");
+      return;
+    }
+
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      _addLog("Error: Camera permission denied.");
+      return;
+    }
+
+    try {
+      final camera = _availableCameras[_selectedCameraIndex];
+      _cameraController = CameraController(
+        camera,
+        ResolutionPreset.low, // Low res to keep frames small & fast
+        enableAudio: false,   // Audio is handled separately
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      await _cameraController!.initialize();
+      _isCameraOn = true;
+      notifyListeners();
+      _addLog("Vision: Camera ON (${camera.name}).");
+
+      // If session is already active, start streaming frames immediately
+      if (_state == GeminiState.active) {
+        _startFrameStreaming();
+      }
+    } catch (e) {
+      print("GFlux: Camera start error: $e");
+      _addLog("Vision Error: $e");
+    }
+  }
+
+  Future<void> _stopCamera() async {
+    _stopFrameStreaming();
+    await _cameraController?.dispose();
+    _cameraController = null;
+    _isCameraOn = false;
+    notifyListeners();
+    _addLog("Vision: Camera OFF.");
+  }
+
+  void _startFrameStreaming() {
+    _frameSendTimer?.cancel();
+    // Send a frame every 1 second (1 fps) — sufficient for Gemini to "see"
+    _frameSendTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      await _captureAndSendFrame();
+    });
+    print("GFlux: Vision frame streaming started.");
+  }
+
+  void _stopFrameStreaming() {
+    _frameSendTimer?.cancel();
+    _frameSendTimer = null;
+  }
+
+  Future<void> _captureAndSendFrame() async {
+    if (_cameraController == null ||
+        !_cameraController!.value.isInitialized ||
+        _state != GeminiState.active ||
+        _directChannel == null) return;
+
+    try {
+      final XFile imageFile = await _cameraController!.takePicture();
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+
+      final msg = {
+        "realtimeInput": {
+          "mediaChunks": [
+            {
+              "data": base64Image,
+              "mimeType": "image/jpeg",
+            }
+          ]
+        }
+      };
+      _directChannel!.sink.add(jsonEncode(msg));
+      debugPrint("GFlux: Sent camera frame (${imageBytes.length} bytes).");
+    } catch (e) {
+      // Non-fatal — just log and skip this frame
+      print("GFlux: Frame capture error: $e");
+    }
+  }
+
+  // ── SESSION MANAGEMENT ─────────────────────────────────────────────────
 
   Future<void> startSession() async {
     if (_state == GeminiState.connecting || _state == GeminiState.active) return;
@@ -68,7 +190,7 @@ class GeminiLiveController extends ChangeNotifier {
 
     try {
       if (_backendType == BackendType.vertex) {
-        _addLog("Vertex AI not fully implemented for direct streaming in this test. Use Direct mode.");
+        _addLog("Vertex AI not fully implemented for direct streaming. Use Direct mode.");
         _state = GeminiState.error;
       } else {
         await _connectDirect();
@@ -86,14 +208,13 @@ class GeminiLiveController extends ChangeNotifier {
     final uri = Uri.parse(
       'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.$endpointStr.GenerativeService.BidiGenerateContent?key=$_apiKey'
     );
-    // Note: If v1beta returns 404, we'll try v1alpha in the next attempt.
-    
+
     print("GFlux: Attempting connection to $uri");
     print("GFlux: API Key starts with: ${_apiKey.substring(0, 5)}...");
-    
+
     try {
       _directChannel = WebSocketChannel.connect(uri);
-      
+
       // Setup Message
       final setupMsg = {
         "setup": {
@@ -103,11 +224,11 @@ class GeminiLiveController extends ChangeNotifier {
           }
         }
       };
-      
+
       final jsonSetup = jsonEncode(setupMsg);
       print("DEBUG: Sending setup message: $jsonSetup");
       _directChannel!.sink.add(jsonSetup);
-      
+
       _listenToDirectEvents();
 
       // Timeout for feedback
@@ -128,7 +249,6 @@ class GeminiLiveController extends ChangeNotifier {
 
   void _listenToDirectEvents() {
     _socketSubscription = _directChannel!.stream.listen((data) {
-      // Data might be String or List<int> depending on platform/socket
       String jsonStr = "";
       try {
         if (data is String) {
@@ -136,39 +256,37 @@ class GeminiLiveController extends ChangeNotifier {
         } else if (data is List<int>) {
           jsonStr = utf8.decode(data);
         }
-        
-        // Very verbose, but helpful for debugging
-        // print("DEBUG: Received raw data: $jsonStr");
-        
+
         final Map<String, dynamic> json = jsonDecode(jsonStr);
-        
+
         if (json.containsKey('setupComplete')) {
           _addLog("Gemini: Connection established (setupComplete).");
           _state = GeminiState.active;
           notifyListeners();
           _startRecording();
+          // If camera was already on before session started, begin streaming
+          if (_isCameraOn) {
+            _startFrameStreaming();
+          }
         }
 
         if (json.containsKey('serverContent')) {
           final serverContent = json['serverContent'];
-          // debugPrint("DEBUG: serverContent received");
-          
+
           if (serverContent.containsKey('modelTurn')) {
             final modelTurn = serverContent['modelTurn'];
-            
+
             if (modelTurn.containsKey('parts')) {
               final parts = modelTurn['parts'] as List;
               for (var part in parts) {
                 if (part.containsKey('text')) {
-                   final text = part['text'];
-                   _addLog("Gemini (text): $text");
+                  final text = part['text'];
+                  _addLog("Gemini (text): $text");
                 }
                 if (part.containsKey('inlineData')) {
                   final inlineData = part['inlineData'];
-                  final mimeType = inlineData['mimeType'] ?? "unknown";
                   final base64Audio = inlineData['data'];
-                  // debugPrint("DEBUG: Received audio chunk. MIME: $mimeType, Size: ${base64Audio?.length}");
-                  
+
                   if (base64Audio != null) {
                     final audioData = base64Decode(base64Audio);
                     _playAudioChunk(audioData);
@@ -177,17 +295,17 @@ class GeminiLiveController extends ChangeNotifier {
               }
             }
           }
-          
+
           if (serverContent.containsKey('interrupted')) {
             _addLog("Gemini: Interrupted.");
             _player.stopPlayer();
           }
-          
+
           if (serverContent.containsKey('turnComplete')) {
             debugPrint("DEBUG: Server turnComplete received");
           }
         }
-        
+
         if (json.containsKey('usageMetadata')) {
           // debugPrint("DEBUG: usageMetadata: ${json['usageMetadata']}");
         }
@@ -206,7 +324,7 @@ class GeminiLiveController extends ChangeNotifier {
       final code = _directChannel?.closeCode;
       final reason = _directChannel?.closeReason;
       print("DEBUG: WebSocket Closed. Code: $code, Reason: $reason");
-      
+
       if (_state != GeminiState.idle) {
         _lastError = "Connection closed ($code: $reason).";
         _addLog(_lastError!);
@@ -224,7 +342,7 @@ class GeminiLiveController extends ChangeNotifier {
           sampleRate: 16000,
           numChannels: 1,
         );
-        
+
         final stream = await _recorder.startStream(config);
         int chunkCount = 0;
         _recorderSubscription = stream.listen((data) {
@@ -233,7 +351,7 @@ class GeminiLiveController extends ChangeNotifier {
             if (chunkCount % 50 == 0) {
               debugPrint("DEBUG: Sent 50 audio chunks (total: $chunkCount)");
             }
-            
+
             final msg = {
               "realtimeInput": {
                 "mediaChunks": [
@@ -277,17 +395,14 @@ class GeminiLiveController extends ChangeNotifier {
         await _player.startPlayer(
           fromDataBuffer: data,
           codec: Codec.pcm16,
-          sampleRate: 24000, // Gemini usually sends 24kHz
+          sampleRate: 24000,
           numChannels: 1,
-          whenFinished: () {
-            // This callback is sometimes unreliable for super fast chunks
-          }
+          whenFinished: () {},
         );
-        
-        // Wait for the duration of the audio to avoid overlapping next startPlayer
+
         // PCM 16-bit Mono: duration = length / (sampleRate * 2)
         final durationMs = (data.length / (24000 * 2)) * 1000;
-        await Future.delayed(Duration(milliseconds: durationMs.toInt() - 5)); 
+        await Future.delayed(Duration(milliseconds: durationMs.toInt() - 5));
       } catch (e) {
         print("GFlux Playback Error: $e");
       }
@@ -298,18 +413,20 @@ class GeminiLiveController extends ChangeNotifier {
   void stopSession() {
     print("GFlux: stopSession called.");
     _state = GeminiState.idle;
-    
+
+    _stopFrameStreaming();
+
     _recorderSubscription?.cancel();
     _recorderSubscription = null;
     _recorder.stop();
-    
+
     _socketSubscription?.cancel();
     _socketSubscription = null;
     _directChannel?.sink.close();
     _directChannel = null;
-    
+
     _player.stopPlayer();
-    
+
     notifyListeners();
   }
 
@@ -339,6 +456,7 @@ class GeminiLiveController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _stopCamera();
     _player.closePlayer();
     _recorder.dispose();
     super.dispose();
