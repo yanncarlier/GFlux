@@ -1,5 +1,4 @@
 # GFlux  
-
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pubspec.yaml)
 
 ### First Release:  
@@ -35,47 +34,59 @@ https://github.com/yanncarlier/GFlux/releases/tag/v1.0.0
 
 ---
 
-## 🛠️ Getting Started
-
-For a quick start, follow the steps below. For comprehensive setup details, environment configuration, and contributor guidelines, please refer to the **[INSTALL.md](INSTALL.md)** file.
+## 🛠️ Installation & Setup
 
 ### Prerequisites
-- Flutter SDK (>= 3.5.0)
-- A Gemini API Key from [Google AI Studio](https://aistudio.google.com/)
+- **Flutter SDK**: [Install Flutter](https://docs.flutter.dev/get-started/install) (Version >= 3.5.0 recommended).
+- **Android Studio / VS Code**: Ensure the Flutter and Dart plugins are installed.
+- **Git**: For version control.
+- **Hardware**: A real Android or iOS device is highly recommended for testing real-time audio latency (Emulators may have high audio jitter).
 
 ### Setup
 
-1. **Clone the repository**:
+1. **Clone the Project**:
    ```bash
    git clone https://github.com/yanncarlier/GFlux.git
    cd GFlux
    ```
 
-2. **Configure Environment Variables**:
-   Create a `.env` file in the root directory and add your Gemini API key:
-   ```env
-   GEMINI_API_KEY=your_actual_api_key_here
-   ```
-
-3. **Install Dependencies**:
+2. **Install Dependencies**:
    ```bash
    flutter pub get
    ```
 
-4. **Run the Application**:
-   Connect your Android or iOS device and run:
-   
+3. **Configure Environment Secrets**:
+   GFlux uses `flutter_dotenv` to protect API keys.
+   - Create a file named `.env` in the project root.
+   - Add your Gemini API key from [Google AI Studio](https://aistudio.google.com/):
+     ```env
+     GEMINI_API_KEY=your_actual_api_key_here
+     ```
+
+4. **Android Native Configuration**:
+   Ensure your `android/app/build.gradle` has:
+   - `minSdkVersion 21` (or higher)
+   - `targetSdkVersion 34` (or higher)
+   - Proper permissions in `AndroidManifest.xml` (RECORD_AUDIO, INTERNET).
+
+5. **Run the Application**:
+   Connect your device and run:
    ```bash
    flutter run
    ```
-   
-5. **Build the Application**:
-   
-   ```
-   flutter build apk --release
-   ```
-   
-   
+
+---
+
+## 🏗️ Development Guide
+
+### Key Modules
+- **[`lib/controllers/gemini_live_controller.dart`](lib/controllers/gemini_live_controller.dart)**: The heart of the app. Manages the WebSocket connection, audio capture stream, and the sequential playback queue.
+- **[`lib/views/home_view.dart`](lib/views/home_view.dart)**: Contains the UI and the state-driven animations.
+
+### Audio Pipeline
+GFlux processes raw PCM data to minimize latency. 
+- **Mic Input**: Captured using `record` and sent as Base64 encoded chunks via the `realtimeInput` WebSocket event.
+- **Audio Output**: Bytes received from `serverContent -> modelTurn` are pushed into a `List<Uint8List> _audioQueue` and played sequentially using `flutter_sound`.
 
 ---
 
@@ -84,6 +95,31 @@ For a quick start, follow the steps below. For comprehensive setup details, envi
 - **Single Tap**: Initialize/Start the session. The central frame will pulse when Gemini is listening.
 - **Double Tap**: Send a test prompt to verify the text-to-speech visualizer.
 - **Listen**: Speak naturally; Gemini will respond in real-time.
+
+---
+
+## 🛠️ Troubleshooting
+
+### Audio Issues
+- **Problem**: No audio playback on Android.
+- **Solution**: Ensure your device is not on "Silent" mode and has the necessary permissions granted. Also, check that the `minSdkVersion` is at least **21**.
+
+### Connection Failures
+- **Problem**: WebSocket fails with `404` or `401`.
+- **Solution**: Double-check your `.env` file for a valid **GEMINI_API_KEY**. Also, ensure you have an active internet connection.
+
+### Device Detection
+- **Problem**: `flutter devices` doesn't see your phone.
+- **Solution**: Enable **USB Debugging** in Developer Options. For Android, you may need to use `adb kill-server` and `adb start-server` if the connection is erratic.
+
+---
+
+## 🤝 Contributing
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
 ---
 

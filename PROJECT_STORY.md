@@ -1,14 +1,14 @@
 # Project Story: GFlux 🌌
 
 ## Inspiration
-GFlux was born from a simple question: 
+GFlux was born because: 
 
-I received an email from **Cassie from Devpost** Sun, Mar 1, 2026.
-Gemini Live Agent Challenge By Google
-Prizes	$80,000 in cash
-Deadline	Mar 16, 2026
-To be completely honest the prize money was what grab my attention first and,
-also this is something I tried to develop a few tears ago yet had not time and the tech was still not available for low latency at a low cost. The third and last reason is this is something I want to use myself, I am tired of typing on mobile keyboards not made for humans.
+1 - I received an email from **Cassie from Devpost** Sun, Mar 1, 2026: Gemini Live Agent Challenge By Google and,
+To be completely honest the prize money was what grab my attention first and.
+
+2 - This "idea" was something I tried to develop a few year ago (see original_prod/ dir) yet I didnt find investment (Dubai and HK) and the tech was still not quite available for low latency at low cost. 
+
+3 - The third and last reason is: this is something I want to use myself, I am tired of typing on mobile keyboards not made for humans.
 
 
 - **Adaptive UI**: A minimal, high-aesthetic interface that pulses and glows in sync with the agent's state, providing intuitive visual feedback.
@@ -16,6 +16,8 @@ also this is something I tried to develop a few tears ago yet had not time and t
 ## Architecture & System Design 🏗️
 
 Below is a high-level representation of how GFlux connects the user to the Gemini Multimodal Live API.
+
+Sorry , later I will create a proper diagram probably in *draw.io*
 
 ```mermaid
 graph TD
@@ -67,6 +69,7 @@ Building for "Live" interaction meant we couldn't hide behind loading spinners.
 1. **Audio Race Conditions**: Initially, incoming audio chunks would "overlap," causing the player to crash or skip on real hardware. We solved this by building a custom **Sequential Playback Queue** that manages the timing between chunks with millisecond precision.
 2. **WebSocket Handshakes**: Configuring the initial handshake for `AUDIO` response modalities required precise JSON structures that differed slightly from standard REST APIs.
 3. **Hardware Stability**: Testing on real Android hardware (Samsung SM A326B) revealed ADB stability issues and permission hurdles that aren't present in emulators, requiring a more robust service-based architecture.
+   laptop only 16G Ram.
 
 ## Accomplishments that we're proud of
 - **Stable Hardware Deployment**: Moving the project from an emulator to real hardware while maintaining high-fidelity audio.
@@ -75,15 +78,6 @@ Building for "Live" interaction meant we couldn't hide behind loading spinners.
 
 ## What we learned
 We delved deep into the mechanics of **Digital Signal Processing (DSP)** and WebSocket states. We learned that "Real-Time" is as much about managing the *user's perception* of time (via UI animations) as it is about the raw speed of the model. We also gained a massive appreciation for the nuance of PCM byte alignment in raw audio streams.
-
-## What's next for GFlux
-The current version of GFlux is just the foundation. Our roadmap includes:
-
-- **Improved UI Design**: Evolving the interface with reactive anthropomorphic UX to better reflect the "flow" of human like conversation.
-- **Multi-Endpoint Hub**: Expanding configuration to support multiple AI backends, for example **Vertex AI Gemini API**, as well as non-Google options for maximum flexibility.
-- **Vision Integration**: Enabling the camera to allow Gemini to "see" the user's world in real-time.
-- **State management**: Adding state options for memory persistence.
-- **Haptic Harmony**: Adding subtle haptic pulses that match the cadence of Gemini's voice.
 
 ---
 *GFlux: Intelligence in motion.*
