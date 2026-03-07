@@ -138,10 +138,13 @@ class HomeView extends StatelessWidget {
     bool isCameraOn,
   ) {
     return GestureDetector(
-      // This absorbs the tap so the parent GestureDetector doesn't fire.
       onTap: () {
         debugPrint("GFlux: Camera Toggle tapped.");
         controller.toggleCamera();
+      },
+      onLongPress: () {
+        debugPrint("GFlux: Camera Long Press - Stopping.");
+        controller.stopCamera();
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -160,13 +163,13 @@ class HomeView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isCameraOn ? Icons.videocam : Icons.videocam_off,
+              isCameraOn ? Icons.flip_camera_ios : Icons.videocam_off,
               color: isCameraOn ? accent : Colors.white.withValues(alpha: 0.3),
               size: 18,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
-              isCameraOn ? "VISION ON" : "VISION OFF",
+              isCameraOn ? "SWITCH / HOLD OFF" : "VISION OFF",
               style: TextStyle(
                 color: isCameraOn ? accent : Colors.white.withValues(alpha: 0.3),
                 fontSize: 10,

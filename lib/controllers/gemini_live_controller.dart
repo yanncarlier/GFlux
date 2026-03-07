@@ -72,7 +72,16 @@ class GeminiLiveController extends ChangeNotifier {
   Future<void> _discoverCameras() async {
     try {
       _availableCameras = await availableCameras();
-      print("GFlux: Discovered ${_availableCameras.length} camera(s).");
+      
+      // Default to front camera if available
+      for (int i = 0; i < _availableCameras.length; i++) {
+        if (_availableCameras[i].lensDirection == CameraLensDirection.front) {
+          _selectedCameraIndex = i;
+          break;
+        }
+      }
+      
+      print("GFlux: Discovered ${_availableCameras.length} camera(s). Defaulting to index $_selectedCameraIndex.");
     } catch (e) {
       print("GFlux: Camera discovery error: $e");
     }
@@ -82,13 +91,25 @@ class GeminiLiveController extends ChangeNotifier {
 
   Future<void> toggleCamera() async {
     if (_isCameraOn) {
-      await _stopCamera();
+      if (_availableCameras.length > 1) {
+        _selectedCameraIndex = (_selectedCameraIndex + 1) % _availableCameras.length;
+        _addLog("Vision: Switching camera...");
+        
+        // Notify UI that the camera is momentarily unavailable during switch
+        _isCameraOn = false;
+        _cameraController = null;
+        notifyListeners();
+        
+        await _startCamera(isSwitching: true);
+      } else {
+        await stopCamera();
+      }
     } else {
       await _startCamera();
     }
   }
 
-  Future<void> _startCamera() async {
+  Future<void> _startCamera({bool isSwitching = false}) async {
     if (_availableCameras.isEmpty) {
       _addLog("Error: No cameras found on device.");
       return;
@@ -101,30 +122,44 @@ class GeminiLiveController extends ChangeNotifier {
     }
 
     try {
+      if (isSwitching) {
+        _stopFrameStreaming();
+        if (_cameraController != null) {
+          await _cameraController?.dispose();
+          _cameraController = null;
+          notifyListeners(); // Ensure UI clears the view
+        }
+        // Small delay to allow hardware release
+        await Future.delayed(const Duration(milliseconds: 250));
+      }
+
       final camera = _availableCameras[_selectedCameraIndex];
       _cameraController = CameraController(
         camera,
-        ResolutionPreset.low, // Low res to keep frames small & fast
-        enableAudio: false,   // Audio is handled separately
+        ResolutionPreset.low, 
+        enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
 
       await _cameraController!.initialize();
       _isCameraOn = true;
       notifyListeners();
-      _addLog("Vision: Camera ON (${camera.name}).");
+      _addLog("Vision: Camera ON (${camera.lensDirection.toString().split('.').last}).");
 
-      // If session is already active, start streaming frames immediately
       if (_state == GeminiState.active) {
         _startFrameStreaming();
       }
     } catch (e) {
       print("GFlux: Camera start error: $e");
       _addLog("Vision Error: $e");
+      _cameraController = null;
+      _isCameraOn = false;
+      notifyListeners();
     }
   }
 
-  Future<void> _stopCamera() async {
+  Future<void> stopCamera() async {
+    if (!_isCameraOn) return;
     _stopFrameStreaming();
     await _cameraController?.dispose();
     _cameraController = null;
@@ -456,7 +491,7 @@ class GeminiLiveController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _stopCamera();
+    stopCamera();
     _player.closePlayer();
     _recorder.dispose();
     super.dispose();
