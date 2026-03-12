@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/gemini_live_controller.dart';
+import 'config_dialog.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -85,8 +86,30 @@ class HomeView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Camera Toggle Button - Has its own GestureDetector
-          _buildCameraToggle(context, controller, accent, isCameraOn),
+          Row(
+            children: [
+              // Settings Button
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ConfigDialog(),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.settings, color: Colors.white.withValues(alpha: 0.5), size: 20),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Camera Toggle Button - Has its own GestureDetector
+              _buildCameraToggle(context, controller, accent, isCameraOn),
+            ],
+          ),
 
           // Status Badge
           Container(

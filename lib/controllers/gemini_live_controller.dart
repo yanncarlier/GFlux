@@ -14,12 +14,33 @@ enum BackendType { vertex, direct }
 
 class GeminiLiveController extends ChangeNotifier {
   // CONFIGURATION
-  final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? "";
-  final String _modelName = "gemini-2.5-flash-native-audio-latest";
+  String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? "";
+  String _modelName = "gemini-2.5-flash-native-audio-latest";
   // Alternate model names: 'gemini-2.0-flash-exp', 'gemini-2.0-flash'
 
   // Choose backend: direct (Free Tier) or vertex (Paid/Enterprise)
   BackendType _backendType = BackendType.direct;
+
+  // Multi-Endpoint Hub configs
+  String _baseUrl = "wss://generativelanguage.googleapis.com";
+
+  String get apiKey => _apiKey;
+  String get modelName => _modelName;
+  BackendType get backendType => _backendType;
+  String get baseUrl => _baseUrl;
+
+  void updateConfig({
+    String? apiKey,
+    String? modelName,
+    BackendType? backendType,
+    String? baseUrl,
+  }) {
+    if (apiKey != null) _apiKey = apiKey;
+    if (modelName != null) _modelName = modelName;
+    if (backendType != null) _backendType = backendType;
+    if (baseUrl != null) _baseUrl = baseUrl;
+    notifyListeners();
+  }
 
   GeminiState _state = GeminiState.idle;
   final List<String> _transcript = [];
@@ -52,7 +73,6 @@ class GeminiLiveController extends ChangeNotifier {
   bool get isActive => _state == GeminiState.active;
   List<String> get transcript => _transcript;
   String? get lastError => _lastError;
-  BackendType get backendType => _backendType;
 
   GeminiLiveController() {
     _initPlayer();
@@ -241,7 +261,7 @@ class GeminiLiveController extends ChangeNotifier {
   Future<void> _connectDirect() async {
     final endpointStr = _useFallbackEndpoint ? "v1alpha" : "v1beta";
     final uri = Uri.parse(
-      'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.$endpointStr.GenerativeService.BidiGenerateContent?key=$_apiKey'
+      '$_baseUrl/ws/google.ai.generativelanguage.$endpointStr.GenerativeService.BidiGenerateContent?key=$_apiKey'
     );
 
     print("GFlux: Attempting connection to $uri");
