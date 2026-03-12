@@ -43,7 +43,7 @@ class HomeView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeader(context, controller, accentPurple),
+                    const SizedBox(height: 24),
                     const Spacer(),
                     _buildCentralFrame(context, controller, accentPurple, deepPurple),
                     const Spacer(),
@@ -76,135 +76,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, GeminiLiveController controller, Color accent) {
-    final isConnecting = controller.state == GeminiState.connecting;
-    final isActive = controller.isActive;
-    final isCameraOn = controller.isCameraOn;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              // Settings Button
-              GestureDetector(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const ConfigDialog(),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.settings, color: Colors.white.withValues(alpha: 0.5), size: 20),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Camera Toggle Button - Has its own GestureDetector
-              _buildCameraToggle(context, controller, accent, isCameraOn),
-            ],
-          ),
-
-          // Status Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "GFLUX: ",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  isConnecting ? "CONNECTING..." : (isActive ? "LISTENING..." : "IDLE"),
-                  style: TextStyle(
-                    color: (isActive || isConnecting) ? accent : Colors.white.withOpacity(0.4),
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.psychology,
-                  color: (isActive || isConnecting) ? accent : Colors.white.withOpacity(0.2),
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCameraToggle(
-    BuildContext context,
-    GeminiLiveController controller,
-    Color accent,
-    bool isCameraOn,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        debugPrint("GFlux: Camera Toggle tapped.");
-        controller.toggleCamera();
-      },
-      onLongPress: () {
-        debugPrint("GFlux: Camera Long Press - Stopping.");
-        controller.stopCamera();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isCameraOn ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isCameraOn ? accent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
-          ),
-          boxShadow: isCameraOn
-              ? [BoxShadow(color: accent.withValues(alpha: 0.2), blurRadius: 12)]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isCameraOn ? Icons.flip_camera_ios : Icons.videocam_off,
-              color: isCameraOn ? accent : Colors.white.withValues(alpha: 0.3),
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              isCameraOn ? "SWITCH / HOLD OFF" : "VISION OFF",
-              style: TextStyle(
-                color: isCameraOn ? accent : Colors.white.withValues(alpha: 0.3),
-                fontSize: 10,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildCentralFrame(BuildContext context, GeminiLiveController controller, Color accent, Color deep) {
     final isActive = controller.isActive;
@@ -433,11 +304,60 @@ class HomeView extends StatelessWidget {
 
   Widget _buildFooter(BuildContext context, GeminiLiveController controller, Color accent) {
     final isActive = controller.isActive;
+    final isCameraOn = controller.isCameraOn;
+    final isConnecting = controller.state == GeminiState.connecting;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 80),
+      padding: const EdgeInsets.only(bottom: 40),
       child: Column(
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSquareButton(
+                icon: Icons.settings,
+                label: "SETTINGS",
+                color: Colors.white.withValues(alpha: 0.05),
+                iconColor: Colors.white.withValues(alpha: 0.6),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ConfigDialog(),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              _buildSquareButton(
+                icon: Icons.psychology,
+                label: isConnecting ? "CONNECT" : (isActive ? "LISTEN" : "GFLUX"),
+                color: (isActive || isConnecting) ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                iconColor: (isActive || isConnecting) ? accent : Colors.white.withValues(alpha: 0.6),
+                borderColor: (isActive || isConnecting) ? accent.withValues(alpha: 0.5) : Colors.transparent,
+                onTap: () {
+                  if (isActive || isConnecting) {
+                    controller.stopSession();
+                  } else {
+                    controller.startSession();
+                  }
+                },
+              ),
+              const SizedBox(width: 16),
+              _buildSquareButton(
+                icon: isCameraOn ? Icons.flip_camera_ios : Icons.videocam_off,
+                label: isCameraOn ? "SWITCH" : "VISION",
+                color: isCameraOn ? accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+                iconColor: isCameraOn ? accent : Colors.white.withValues(alpha: 0.6),
+                borderColor: isCameraOn ? accent.withValues(alpha: 0.5) : Colors.transparent,
+                onTap: () {
+                  controller.toggleCamera();
+                },
+                onLongPress: () {
+                  controller.stopCamera();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
           Container(
             width: 280,
             height: 2,
@@ -474,6 +394,47 @@ class HomeView extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSquareButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color iconColor,
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    Color borderColor = Colors.transparent,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: iconColor,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
