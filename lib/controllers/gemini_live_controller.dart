@@ -23,22 +23,30 @@ class GeminiLiveController extends ChangeNotifier {
 
   // Multi-Endpoint Hub configs
   String _baseUrl = "wss://generativelanguage.googleapis.com";
+  String _region = "asia-southeast3";
+  String _projectId = dotenv.env['GCP_PROJECT_ID'] ?? "";
 
   String get apiKey => _apiKey;
   String get modelName => _modelName;
   BackendType get backendType => _backendType;
   String get baseUrl => _baseUrl;
+  String get region => _region;
+  String get projectId => _projectId;
 
   void updateConfig({
     String? apiKey,
     String? modelName,
     BackendType? backendType,
     String? baseUrl,
+    String? region,
+    String? projectId,
   }) {
     if (apiKey != null) _apiKey = apiKey;
     if (modelName != null) _modelName = modelName;
     if (backendType != null) _backendType = backendType;
     if (baseUrl != null) _baseUrl = baseUrl;
+    if (region != null) _region = region;
+    if (projectId != null) _projectId = projectId;
     notifyListeners();
   }
 
@@ -245,8 +253,7 @@ class GeminiLiveController extends ChangeNotifier {
 
     try {
       if (_backendType == BackendType.vertex) {
-        _addLog("Vertex AI not fully implemented for direct streaming. Use Direct mode.");
-        _state = GeminiState.error;
+        await _connectVertex();
       } else {
         await _connectDirect();
       }
@@ -256,6 +263,52 @@ class GeminiLiveController extends ChangeNotifier {
       _state = GeminiState.error;
     }
     notifyListeners();
+  }
+
+  Future<void> _connectVertex() async {
+    // Vertex AI endpoint format
+    final endpointStr = _useFallbackEndpoint ? "v1alpha1" : "v1beta1";
+    final uri = Uri.parse(
+      'wss://$_region-aiplatform.googleapis.com/ws/google.cloud.aiplatform.$endpointStr.LlmUtilityService.BidiGenerateContent?access_token=$_apiKey'
+    );
+
+    print("GFlux: Attempting Vertex connection to $uri");
+
+    try {
+      _directChannel = WebSocketChannel.connect(uri);
+
+      // Vertex AI Setup Message requires full model path
+      final fullModelPath = "projects/$_projectId/locations/$_region/publishers/google/models/$_modelName";
+      
+      final setupMsg = {
+        "setup": {
+          "model": fullModelPath,
+          "generationConfig": {
+            "responseModalities": ["AUDIO"]
+          }
+        }
+      };
+
+      final jsonSetup = jsonEncode(setupMsg);
+      print("DEBUG: Sending Vertex setup message: $jsonSetup");
+      _directChannel!.sink.add(jsonSetup);
+
+      _listenToDirectEvents();
+
+      // Timeout for feedback
+      Future.delayed(const Duration(seconds: 10), () {
+        if (_state == GeminiState.connecting) {
+          _addLog("Error: Handshake timeout for Vertex.");
+          _state = GeminiState.error;
+          notifyListeners();
+        }
+      });
+    } catch (e) {
+      print("GFlux Connection Exception: $e");
+      _addLog("Vertex connection failed: $e");
+      _state = GeminiState.error;
+      notifyListeners();
+    }
   }
 
   Future<void> _connectDirect() async {

@@ -13,6 +13,8 @@ class _ConfigDialogState extends State<ConfigDialog> {
   late TextEditingController _apiKeyController;
   late TextEditingController _modelNameController;
   late TextEditingController _baseUrlController;
+  late TextEditingController _regionController;
+  late TextEditingController _projectIdController;
   late BackendType _backendType;
 
   @override
@@ -22,6 +24,8 @@ class _ConfigDialogState extends State<ConfigDialog> {
     _apiKeyController = TextEditingController(text: controller.apiKey);
     _modelNameController = TextEditingController(text: controller.modelName);
     _baseUrlController = TextEditingController(text: controller.baseUrl);
+    _regionController = TextEditingController(text: controller.region);
+    _projectIdController = TextEditingController(text: controller.projectId);
     _backendType = controller.backendType;
   }
 
@@ -30,6 +34,8 @@ class _ConfigDialogState extends State<ConfigDialog> {
     _apiKeyController.dispose();
     _modelNameController.dispose();
     _baseUrlController.dispose();
+    _regionController.dispose();
+    _projectIdController.dispose();
     super.dispose();
   }
 
@@ -92,6 +98,26 @@ class _ConfigDialogState extends State<ConfigDialog> {
                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
               ),
             ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _regionController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Region (e.g., asia-southeast3)',
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _projectIdController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Project ID (for Vertex AI)',
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+              ),
+            ),
           ],
         ),
       ),
@@ -109,6 +135,8 @@ class _ConfigDialogState extends State<ConfigDialog> {
               apiKey: _apiKeyController.text,
               modelName: _modelNameController.text,
               baseUrl: _baseUrlController.text,
+              region: _regionController.text,
+              projectId: _projectIdController.text,
               backendType: _backendType,
             );
             Navigator.pop(context);
