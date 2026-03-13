@@ -1,8 +1,8 @@
 # GFlux  
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pubspec.yaml)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](pubspec.yaml)
 
-### First Release:  
-https://github.com/yanncarlier/GFlux/releases/tag/v1.0.0 
+### Latest Release:  
+https://github.com/yanncarlier/GFlux/releases/tag/v1.3.0 
 
 **GFlux** is a high-performance, real-time multimodal AI agent built for the **Gemini Live Agent Challenge**. It leverages the cutting-edge Gemini Multimodal Live API to provide seamless, low-latency bidirectional voice and text interactions in a premium mobile environment.
 
