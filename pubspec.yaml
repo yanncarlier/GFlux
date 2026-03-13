@@ -2,7 +2,7 @@ name: gflux
 description: >
   GFlux: A real-time multimodal AI agent built for the Gemini Live Agent Challenge.
   Features bidirectional audio/video streaming and Google Cloud integration.
-version: 1.0.0+1
+version: 1.3.0+1
 publish_to: 'none' # Prevents accidental publishing to pub.dev
 
 environment:
