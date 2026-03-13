@@ -17,8 +17,6 @@ To be completely honest the prize money was what grab my attention first and.
 
 Below is a high-level representation of how GFlux connects the user to the Gemini Multimodal Live API.
 
-Sorry , later I will create a proper diagram probably in *draw.io*
-
 ```mermaid
 graph TD
     User((User)) <--> |"Audio (Voice)"| Frontend["Flutter Mobile App (GFlux)"]
@@ -38,7 +36,7 @@ graph TD
     end
 ```
 
-![Architecture Diagram](assets/images/architecture.png)
+![Architecture Diagram](architecture_diagram.png)
 
 ## Built with 🛠️
 
